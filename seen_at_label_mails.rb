@@ -16,8 +16,8 @@ def read_settings(filename)
 end
 
 settings = read_settings('.config')
-delete_target = ARGV[0]
-if delete_target == nil
+seen_target = ARGV[0]
+if seen_target == nil
 	puts "please input target label's name"
 	exit
 end
@@ -37,16 +37,16 @@ rescue => ex
 end
 puts "OK."
 
-puts "Select Target Dir. [" << delete_target << "]"
+puts "Select Target Dir. [" << seen_target << "]"
 begin
-	imap.select(delete_target)
+	imap.select(seen_target)
 rescue => ex
 	puts ex
-	puts "Label " << delete_target << " really exist?"
+	puts "Label " << seen_target << " really exist?"
 	exit
 end
 
-puts "Retrive All Messages From " << delete_target
+puts "Retrive All Messages From " << seen_target
 all_message_uids = imap.uid_search("all")
 
 if (all_message_uids == [])
@@ -57,11 +57,13 @@ end
 puts "Retrive " << all_message_uids.length.to_s << " Mails"
 
 puts "Try To Set Seen Flags."
-imap.uid_store(all_message_uids, "+FLAGS", [:Seen])
+fetchData = imap.uid_store(all_message_uids, "+FLAGS", [:Seen])
 
-puts "Try EXPUNGE..."
-expunge_items = imap.expunge()
+if (fetchData == nil)
+	puts "Nothing updated. stopping scripts..."
+	exit
+end
 
-puts expunge_items.length.to_s << " messages seen."
+puts fetchData.length.to_s << " item updated."
 imap.check
 imap.disconnect
